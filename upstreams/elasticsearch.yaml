@@ -1,0 +1,49 @@
+version: "3"
+
+services:
+
+  es1:
+    image: elasticsearch:2
+    restart: always
+    container_name: es1
+    networks:
+      - es
+    environment:
+      - discovery.type=single-node
+    ports:
+      - "9000:9200/tcp"
+
+  es2:
+    image: elasticsearch:2
+    restart: always
+    container_name: es2
+    networks:
+      - es
+    environment:
+      - discovery.type=single-node
+    ports:
+      - "9100:9200/tcp"
+
+  es3:
+    image: elasticsearch:2
+    restart: always
+    container_name: es3
+    networks:
+      - es
+    environment:
+      - discovery.type=single-node
+    ports:
+      - "9200:9200/tcp"
+
+  es4:
+    image: elasticsearch:2
+    restart: always
+    container_name: es4
+    networks:
+      - es
+    environment:
+      - discovery.type=single-node
+    ports:
+      - "9300:9200/tcp"
+networks:
+  es:
