@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Server Sent Events demo</title>
+    <meta name="description" content="Server Sent Events demo" />
+    <meta name="author" content="Kaitlin Moreno" />
+  <style type="text/css">
+  .event {
+    margin: 24px 0;
+  }
+  p {
+    margin: 0;
+  }
+  </style>
+  </head>
+
+  <body>
+    <script>
+      const opts = {
+        withCredentials: true
+      }
+
+      const source1 = new EventSource("/server-1/events", opts);
+
+      const source2 = new EventSource("/server-2/events", opts);
+
+      source1.addEventListener("server1", renderEvent);
+
+      source2.addEventListener("server2", renderEvent);
+
+      source1.addEventListener("close", function(e) {
+        console.log(e);
+      });
+
+      source1.addEventListener("error", function(e) {
+        console.log(e);
+      });
+
+      function renderEvent(event){
+        const wrapper = document.createElement("div");
+        wrapper.className = "event"   
+        const type = document.createTextNode(`event type: ${event.type}`);
+        const typeNode = document.createElement("p")
+        typeNode.append(type);
+        const data = document.createTextNode(`data: ${event.data}`);
+        const dataNode = document.createElement("p")
+        dataNode.append(data);
+        wrapper.append(typeNode, dataNode);
+        document.querySelector("#events").appendChild(wrapper);
+      }
+    </script>
+  </body>
+  <div>
+    <h1>Server Sent Events demo</h1>
+      <div id="events"></div>
+  </div>
+</html>

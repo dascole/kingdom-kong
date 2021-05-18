@@ -1,0 +1,103 @@
+version: "3"
+
+volumes:
+    kong_data_2321: {}
+
+services:
+
+  postgres:
+    image: postgres:9.6
+    restart: always
+    container_name: kong-2331-postgres
+    networks:
+      - kong-ee-2331
+    environment:
+      POSTGRES_USER: kong
+      POSTGRES_PASSWORD: kong
+      POSTGRES_HOST_AUTH_METHOD: trust
+      POSTGRES_DB: kong
+    ports:
+      - "6432:5432/tcp"
+
+      
+#Running the migrations here
+
+  kong-migrations:
+    image: kong/kong-gateway:2.3.3.1-alpine
+    container_name: kong-2331-migrations
+    command: kong migrations bootstrap
+    depends_on:
+      - postgres
+    environment:
+      KONG_DATABASE: postgres
+      KONG_PASSWORD: admin
+      KONG_PG_DATABASE: ${KONG_PG_DATABASE:-kong}
+      KONG_PG_HOST: kong-2331-postgres
+      KONG_PG_PASSWORD: ${KONG_PG_PASSWORD:-kong}
+      KONG_PG_USER: ${KONG_PG_USER:-kong}
+      KONG_LICENSE_DATA: ${KONG_LICENSE_DATA}
+    networks:
+      - kong-ee-2331
+    restart: on-failure
+
+  kong-ee:
+    image: kong/kong-gateway:2.3.3.1-alpine
+    user: "${KONG_USER:-root}"
+    container_name: kong-2331
+    networks:
+      - kong-ee-2331
+    depends_on:
+      - postgres
+      - kong-migrations
+    restart: on-failure
+    ports:
+      - "38000:38000/tcp"
+      - "38001:38001/tcp"
+      - "38002:38002/tcp"
+      - "38003:38003/tcp"
+      - "38004:38004/tcp"
+      - "38443:38443/tcp"
+      - "38444:38444/tcp"
+      - "38445:38445/tcp"
+      - "9080:9080/tcp"
+      - "9081:9081/tcp"
+    environment:
+      KONG_PG_DATABASE: ${KONG_PG_DATABASE:-kong}
+      KONG_ADMIN_GUI_LISTEN:  0.0.0.0:38002, 0.0.0.0:28445 ssl
+      KONG_PROXY_LISTEN: 0.0.0.0:38000 http2, 0.0.0.0:38443 ssl http2, 0.0.0.0:7080 http2, 0.0.0.0:7081 http2 ssl
+      KONG_ADMIN_LISTEN: 0.0.0.0:38001, 0.0.0.0:38444 ssl
+      KONG_LICENSE_DATA: ${KONG_LICENSE_DATA}
+      KONG_LOG_LEVEL: debug
+      KONG_ADMIN_ACCESS_LOG: /dev/stdout
+      KONG_ADMIN_ERROR_LOG: /dev/stderr
+      KONG_PORTAL_API_ACCESS_LOG: /dev/stderr
+      KONG_PORTAL_API_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_GUI_URL: http://localhost:38002
+      KONG_DATABASE: postgres
+      KONG_PG_HOST: kong-2331-postgres
+      KONG_PG_PASSWORD: ${KONG_PG_PASSWORD:-kong}
+      KONG_PG_USER: ${KONG_PG_USER:-kong}
+      KONG_PROXY_ACCESS_LOG: "/dev/stdout"
+      KONG_PROXY_ERROR_LOG: "/dev/stderr"
+      KONG_NGINX_PROXY_PROXY_BUFFERING: "off"
+      KONG_PLUGINS: bundled
+      KONG_AUDIT_LOG: "on"
+      KONG_NGINX_HTTP_SSL_PROTOCOLS: TLSv1.2
+      KONG_SSL_CIPHER_SUITES: custom
+      KONG_SSL_CIPHERS: "ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256"
+      KONG_PASSWORD: admin
+      KONG_PORTAL_EMAILS_FROM: noreply@konghq.com
+      KONG_PORTAL_EMAILS_REPLY_TO: noreply@konghq.com
+      KONG_PORTAL_GUI_LISTEN: 0.0.0.0:38003
+      KONG_PORTAL_GUI_HOST: localhost:38003
+      KONG_PORTAL_API_LISTEN: 0.0.0.0:38004, 0.0.0.0:38447 ssl
+      KONG_PORTA_API_URL: 127.0.0.1:38004
+      KONG_PORTAL_CORS_ORIGINS: "*"
+      KONG_PORTAL_GUI_PROTOCOL: http
+      KONG_PORTAL: "on"
+      KONG_VITALS: "on"
+
+networks:
+  kong-ee-2331:
+    name: kong-ee-2331
+    driver: bridge

@@ -1,0 +1,61 @@
+version: "2"
+
+services:
+  edge:
+    image: envoyproxy/envoy:v1.14-latest
+    ports:
+      - "8080:8080"
+      - "8001:8001"
+    networks:
+      - kong-ee-2331
+    volumes:
+      - ./envoy.yaml:/etc/envoy/envoy.yaml  
+      - ./certs:/certs
+
+  server-1:
+    image: kaitmore/sse-server:latest
+    ports:
+      - "7081:7081"
+    networks:
+      - kong-ee-2331
+    volumes:
+      - ./certs:/certs
+    environment:
+      - PORT=7081
+      - DATA_ENDPOINT=https://icanhazdadjoke.com/
+      - EVENT_TYPE=server1
+      - CERT_PATH=/certs/localhost.crt
+      - KEY_PATH=/certs/localhost.key
+
+  server-2:
+    image: kaitmore/sse-server:latest
+    ports:
+      - "6081:6081"
+    volumes:
+      - ./certs:/certs
+    networks:
+      - kong-ee-2331
+    environment:
+      - PORT=6081
+      - DATA_ENDPOINT=https://icanhazdadjoke.com/
+      - EVENT_TYPE=server2
+      - CERT_PATH=/certs/localhost.crt
+      - KEY_PATH=/certs/localhost.key
+
+  client: 
+    image: kaitmore/sse-client:latest
+    ports: 
+      - "8081:8081"
+    volumes:
+      - ./certs:/certs
+    networks:
+      - kong-ee-2331
+    environment:
+      - PORT=8081
+      - CERT_PATH=/certs/localhost.crt
+      - KEY_PATH=/certs/localhost.key
+
+networks:
+  kong-ee-2331:
+    name: kong-ee-2331
+    driver: bridge
